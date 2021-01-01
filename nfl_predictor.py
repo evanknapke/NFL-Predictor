@@ -1,4 +1,5 @@
 import constants
+import os
 import pandas as pd
 import requests
 import sys
@@ -15,17 +16,20 @@ def main():
         away_team = clean_name(matchups_df.iloc[i][0])
         stats = get_matchup_stats(home_team, away_team, pts_df, pts_allowed_df)
 
+        predictions = get_predictions(home_team, away_team, stats)
         if (constants.SAVE_TO_TXT):
-            sys.stdout = open(constants.FILENAME+'.txt', 'a')
-            new_weight = display_predictions(home_team, away_team, stats)
+            filename = './out/'+constants.FILENAME+'.txt'
+            os.makedirs(os.path.dirname(filename), exist_ok=True)
+            sys.stdout = open(filename, 'a')
+            display_predictions(home_team, away_team, predictions)
             sys.stdout.close()
         else:
-            new_weight = display_predictions(home_team, away_team, stats)
+            display_predictions(home_team, away_team, predictions)
 
-        overall_new_weight += new_weight
-    overall_new_weight = overall_new_weight/matchups_df.shape[0]
-    if (overall_new_weight != 0):
-        print(overall_new_weight)
+    #     overall_new_weight += new_weight
+    # overall_new_weight = overall_new_weight/matchups_df.shape[0]
+    # if (overall_new_weight != 0):
+    #     print(overall_new_weight)
 
 # TODO rewrite these into 1 function to take in all tables on the page
 #      or only select the table for the matchups
@@ -62,12 +66,11 @@ def get_matchup_stats(home_team, away_team, pts_df, pts_allowed_df):
             "away_pts_allowed": away_pts_allowed
            }
 
-# TODO: clean and break this up into new functions
-def display_predictions(home_team, away_team, stats):
+# TODO: clean and fix commented out code
+def get_predictions(home_team, away_team, stats):
     home_total = stats['home_avg_pts']*constants.AVG_PTS_WEIGHT + stats['away_pts_allowed']*constants.AVG_PTS_ALLOWED_WEIGHT
     away_total = stats['away_avg_pts']*constants.AVG_PTS_WEIGHT + stats['home_pts_allowed']*constants.AVG_PTS_ALLOWED_WEIGHT
-    combined_total = round( (home_total + away_total), constants.SCORE_DECIMALS)
-    difference = round(abs(home_total - away_total), constants.SPREAD_DECIMALS)
+    spread = round(abs(home_total - away_total), constants.SPREAD_DECIMALS)
 
     home_total = round(home_total, constants.SCORE_DECIMALS)
     away_total = round(away_total, constants.SCORE_DECIMALS)
@@ -75,9 +78,8 @@ def display_predictions(home_team, away_team, stats):
     if (constants.SCORE_DECIMALS == 0):
         home_total = int(home_total)
         away_total = int(away_total)
-        combined_total = int(combined_total)
     if (constants.SPREAD_DECIMALS == 0):
-        difference = int(difference)
+        spread = int(spread)
 
     if (home_total > away_total):
         winner = home_team
@@ -86,17 +88,25 @@ def display_predictions(home_team, away_team, stats):
     else:
         winner = 'TIE'
 
+    return {
+            "away_total": away_total,
+            "home_total": home_total,
+            "winner": winner,
+            "spread": spread
+           }
+
+    # if (constants.GET_NEW_WEIGHTS):
+    #     new_weight = weight.find_new_weights(home_team, away_team, home_total, away_total, stats, AVG_PTS_WEIGHT)
+    # else:
+    #     new_weight = 0
+    #
+    # return(new_weight)
+
+def display_predictions(home_team, away_team, predictions):
     print(away_team + ' @ ' + home_team)
-    print(str(away_total) + ' - ' + str(home_total) + ' ('+winner+' -'+str(difference)+')')
-    print('Total pts: ' + str(combined_total))
+    print(str(predictions['away_total']) + ' - ' + str(predictions['home_total']) + ' ('+predictions['winner']+' -'+str(predictions['spread'])+')')
+    print('Total pts: ' + str( round(predictions['home_total'] + predictions['away_total'], constants.SCORE_DECIMALS) ))
     print('\n')
-
-    if (constants.GET_NEW_WEIGHTS):
-        new_weight = weight.find_new_weights(home_team, away_team, home_total, away_total, stats, AVG_PTS_WEIGHT)
-    else:
-        new_weight = 0
-
-    return(new_weight)
 
 def clean_name(team):
     # special cases

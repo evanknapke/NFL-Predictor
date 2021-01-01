@@ -3,8 +3,8 @@ SCHEDULE_URL = 'https://www.espn.com/nfl/schedule/' # for upcoming games
 AVG_PTS_URL = 'https://www.teamrankings.com/nfl/stat/points-per-game'
 AVG_PTS_ALLOWED_URL = 'https://www.teamrankings.com/nfl/stat/opponent-points-per-game'
 
-SAVE_TO_TXT = False # boolean, False to print to console, True to save to  .txt
-FILENAME = 'week17' # string, used as filename if SAVE_TO_TXT is True
+SAVE_TO_TXT = False # boolean, False to print to console, True to save to .txt in out folder
+FILENAME = 'results' # string, used as filename if SAVE_TO_TXT is True
 
 GET_NEW_WEIGHTS = False # boolean, False to not calculate a new weight
 
