@@ -10,7 +10,7 @@ def main():
     pts_allowed_df = save_to_df(constants.AVG_PTS_ALLOWED_URL)
     new_weight = 0.0
     overall_new_weight = 0.0
-    for i in range(matchups_df.shape[0]):
+    for i in range(matchups_df.shape[0]): # length of rows in df
         home_team = clean_name(matchups_df.iloc[i][1])
         away_team = clean_name(matchups_df.iloc[i][0])
         stats = get_matchup_stats(home_team, away_team, pts_df, pts_allowed_df)
@@ -40,7 +40,7 @@ def save_to_df(url):
 def save_to_df2(url):
     r = requests.get(url)
     df_list = pd.read_html(r.text) # parses all the tables in webpage to a list
-    df = df_list[2] # first table on the page
+    df = df_list[2]
     df.head()
     return df
 
@@ -62,6 +62,7 @@ def get_matchup_stats(home_team, away_team, pts_df, pts_allowed_df):
             "away_pts_allowed": away_pts_allowed
            }
 
+# TODO: clean and break this up into new functions
 def display_predictions(home_team, away_team, stats):
     home_total = stats['home_avg_pts']*constants.AVG_PTS_WEIGHT + stats['away_pts_allowed']*constants.AVG_PTS_ALLOWED_WEIGHT
     away_total = stats['away_avg_pts']*constants.AVG_PTS_WEIGHT + stats['home_pts_allowed']*constants.AVG_PTS_ALLOWED_WEIGHT
@@ -97,73 +98,22 @@ def display_predictions(home_team, away_team, stats):
 
     return(new_weight)
 
-# TODO: find a better way to do this
 def clean_name(team):
-    if team == 'Arizona ARI':
-        return 'Arizona'
-    elif team == 'Atlanta ATL':
-        return 'Atlanta'
-    elif team == 'Buffalo BUF':
-        return 'Buffalo'
-    elif team == 'Baltimore BAL':
-        return 'Baltimore'
-    elif team == 'Carolina CAR':
-        return 'Carolina'
-    elif team == 'Chicago CHI':
-        return 'Chicago'
-    elif team == 'Cincinnati CIN':
-        return 'Cincinnati'
-    elif team == 'Cleveland CLE':
-        return 'Cleveland'
-    elif team == 'Denver DEN':
-        return 'Denver'
-    elif team == 'Dallas DAL':
-        return 'Dallas'
-    elif team == 'Detroit DET':
-        return 'Detroit'
-    elif team == 'Green Bay GB':
-        return 'Green Bay'
-    elif team == 'Houston HOU':
-        return 'Houston'
-    elif team == 'Indianapolis IND':
-        return 'Indianapolis'
-    elif team == 'Jacksonville JAX':
-        return 'Jacksonville'
-    elif team == 'Kansas City KC':
-        return 'Kansas City'
+    # special cases
+    if team == 'Los Angeles LAC':
+        return 'LA Chargers'
+    elif team == 'Los Angeles LAR':
+        return 'LA Rams'
     elif team == 'Los Angeles LAC':
         return 'LA Chargers'
     elif team == 'Los Angeles LAR':
         return 'LA Rams'
-    elif team == 'Las Vegas LV':
-        return 'Las Vegas'
-    elif team == 'Miami MIA':
-        return 'Miami'
-    elif team == 'Minnesota MIN':
-        return 'Minnesota'
-    elif team == 'New England NE':
-        return 'New England'
-    elif team == 'New Orleans NO':
-        return 'New Orleans'
     elif team == 'New York NYG':
         return 'NY Giants'
     elif team == 'New York NYJ':
         return 'NY Jets'
-    elif team == 'Philadelphia PHI':
-        return 'Philadelphia'
-    elif team == 'Pittsburgh PIT':
-        return 'Pittsburgh'
-    elif team == 'San Francisco SF':
-        return 'San Francisco'
-    elif team == 'Seattle SEA':
-        return 'Seattle'
-    elif team == 'Tampa Bay TB':
-        return 'Tampa Bay'
-    elif team == 'Tennessee TEN':
-        return 'Tennessee'
-    elif team == 'Washington WSH':
-        return 'Washington'
+
     else:
-        return team
+        return team[:-3].strip() # remove abbreviations
 
 main()

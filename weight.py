@@ -23,6 +23,7 @@ def find_new_weights(home_team, away_team, home_total, away_total, stats, curren
     # TODO: figure out a more accurate new weight for each game rather using the average of all
     return((new_weight_home + new_weight_away) / 2)
 
+# TODO: pull actual scores from web
 def get_actual_scores(home_team):
     if (home_team == 'Kansas City'):
         away = 14
