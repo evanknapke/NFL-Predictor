@@ -5,6 +5,7 @@ import requests
 import sys
 import weight
 
+# TODO: Split training into new class
 def main():
     matchups_df = save_to_df(constants.SCHEDULE_URL)
     pts_df = save_to_df(constants.AVG_PTS_URL)
@@ -31,7 +32,7 @@ def main():
     # if (overall_new_weight != 0):
     #     print(overall_new_weight)
 
-# TODO rewrite these into 1 function to take in all tables on the page
+# TODO: rewrite these into 1 function to take in all tables on the page
 #      or only select the table for the matchups
 #      or find new website that works better that puts matchups into one table
 def save_to_df(url):
@@ -68,29 +69,29 @@ def get_matchup_stats(home_team, away_team, pts_df, pts_allowed_df):
 
 # TODO: clean and fix commented out code
 def get_predictions(home_team, away_team, stats):
-    home_total = stats['home_avg_pts']*constants.AVG_PTS_WEIGHT + stats['away_pts_allowed']*constants.AVG_PTS_ALLOWED_WEIGHT
-    away_total = stats['away_avg_pts']*constants.AVG_PTS_WEIGHT + stats['home_pts_allowed']*constants.AVG_PTS_ALLOWED_WEIGHT
-    spread = round(abs(home_total - away_total), constants.SPREAD_DECIMALS)
+    home_score = stats['home_avg_pts']*constants.AVG_PTS_WEIGHT + stats['away_pts_allowed']*constants.AVG_PTS_ALLOWED_WEIGHT
+    away_score = stats['away_avg_pts']*constants.AVG_PTS_WEIGHT + stats['home_pts_allowed']*constants.AVG_PTS_ALLOWED_WEIGHT
+    spread = round(abs(home_score - away_score), constants.SPREAD_DECIMALS)
 
-    home_total = round(home_total, constants.SCORE_DECIMALS)
-    away_total = round(away_total, constants.SCORE_DECIMALS)
+    home_score = round(home_score, constants.SCORE_DECIMALS)
+    away_score = round(away_score, constants.SCORE_DECIMALS)
 
     if (constants.SCORE_DECIMALS == 0):
-        home_total = int(home_total)
-        away_total = int(away_total)
+        home_score = int(home_score)
+        away_score = int(away_score)
     if (constants.SPREAD_DECIMALS == 0):
         spread = int(spread)
 
-    if (home_total > away_total):
+    if (home_score > away_score):
         winner = home_team
-    elif (away_total > home_total):
+    elif (away_score > home_score):
         winner = away_team
     else:
         winner = 'TIE'
 
     return {
-            "away_total": away_total,
-            "home_total": home_total,
+            "away_score": away_score,
+            "home_score": home_score,
             "winner": winner,
             "spread": spread
            }
@@ -103,9 +104,18 @@ def get_predictions(home_team, away_team, stats):
     # return(new_weight)
 
 def display_predictions(home_team, away_team, predictions):
-    print(away_team + ' @ ' + home_team)
-    print(str(predictions['away_total']) + ' - ' + str(predictions['home_total']) + ' ('+predictions['winner']+' -'+str(predictions['spread'])+')')
-    print('Total pts: ' + str( round(predictions['home_total'] + predictions['away_total'], constants.SCORE_DECIMALS) ))
+    spread = str(predictions['spread'])
+    if (predictions['home_score'] > predictions['away_score']):
+        home_spread = '(-' + spread + ')'
+        away_spread = '(+' + spread + ')'
+    else:
+        home_spread = '(+' + spread + ')'
+        away_spread = '(-' + spread + ')'
+
+    print(away_team +' @ '+ home_team)
+    print( '{:<6s} {:<15s} {:<5s}'.format(away_spread, away_team, str(predictions['away_score'])) )
+    print( '{:<6s} {:<15s} {:<5s}'.format(home_spread, home_team, str(predictions['home_score'])) )
+    print( '{:<22s} {:<5s}'.format('Combined Score ', str(predictions['home_score'] + predictions['away_score'])))
     print('\n')
 
 def clean_name(team):
