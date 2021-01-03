@@ -5,32 +5,39 @@ import requests
 import sys
 import weight
 
-# TODO: Split training into new class
 def main():
-    matchups_df = save_to_df(constants.SCHEDULE_URL)
+    # TODO: update save_to_df so you dont need to change when training
+    matchups_df = save_to_df(constants.SCHEDULE_URL) # change to save_to_df2 if training
     pts_df = save_to_df(constants.AVG_PTS_URL)
     pts_allowed_df = save_to_df(constants.AVG_PTS_ALLOWED_URL)
-    new_weight = 0.0
-    overall_new_weight = 0.0
+    new_weight_home = 0.0 # for training
+    new_weight_away = 0.0 # for training
     for i in range(matchups_df.shape[0]): # length of rows in df
         home_team = clean_name(matchups_df.iloc[i][1])
         away_team = clean_name(matchups_df.iloc[i][0])
         stats = get_matchup_stats(home_team, away_team, pts_df, pts_allowed_df)
 
         predictions = get_predictions(home_team, away_team, stats)
-        if (constants.SAVE_TO_TXT):
-            filename = './out/'+constants.FILENAME+'.txt'
-            os.makedirs(os.path.dirname(filename), exist_ok=True)
-            sys.stdout = open(filename, 'a')
-            display_predictions(home_team, away_team, predictions)
-            sys.stdout.close()
+        if (not constants.GET_NEW_WEIGHTS):
+            if (constants.SAVE_TO_TXT):
+                filename = './out/'+constants.FILENAME+'.txt'
+                os.makedirs(os.path.dirname(filename), exist_ok=True)
+                sys.stdout = open(filename, 'a')
+                display_predictions(home_team, away_team, predictions)
+                sys.stdout.close()
+            else:
+                display_predictions(home_team, away_team, predictions)
         else:
-            display_predictions(home_team, away_team, predictions)
+            new_weights = weight.find_new_weights(home_team, away_team, predictions, stats)
+            new_weight_home += new_weights['new_weight_home']
+            new_weight_away += new_weights['new_weight_away']
 
-    #     overall_new_weight += new_weight
-    # overall_new_weight = overall_new_weight/matchups_df.shape[0]
-    # if (overall_new_weight != 0):
-    #     print(overall_new_weight)
+    if (constants.GET_NEW_WEIGHTS):
+        new_weight_home = new_weight_home/matchups_df.shape[0]
+        new_weight_away = new_weight_away/matchups_df.shape[0]
+        print('New Home Weight: ' + str(new_weight_home))
+        print('New Away Weight: ' + str(new_weight_away))
+        print('Average Weight:  ' + str( (new_weight_home + new_weight_away) / 2))
 
 # TODO: rewrite these into 1 function to take in all tables on the page
 #      or only select the table for the matchups
@@ -95,13 +102,6 @@ def get_predictions(home_team, away_team, stats):
             "winner": winner,
             "spread": spread
            }
-
-    # if (constants.GET_NEW_WEIGHTS):
-    #     new_weight = weight.find_new_weights(home_team, away_team, home_total, away_total, stats, AVG_PTS_WEIGHT)
-    # else:
-    #     new_weight = 0
-    #
-    # return(new_weight)
 
 def display_predictions(home_team, away_team, predictions):
     spread = str(predictions['spread'])
