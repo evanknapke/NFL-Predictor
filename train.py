@@ -30,4 +30,4 @@ def get_actual_scores(home_team, away_team, result):
     if (away_abbreviation in result and home_abbreviation in result):
         scores = re.findall(r'\d+', result) # extract scores
 
-    return {"home": int(scores[1]), "away": int(scores[0])}
+    return {"home": int(scores[0]), "away": int(scores[1])}

@@ -3,7 +3,7 @@ import os
 import pandas as pd
 import requests
 import sys
-import weight
+import train
 
 def main():
     # TODO: update save_to_df so you dont need to change when training
@@ -43,7 +43,7 @@ def main():
         else:
             # for training
             result = matchups_df.iloc[i][2]
-            new_weights = weight.find_new_weights(home_team_raw, away_team_raw, predictions, stats, result)
+            new_weights = train.find_new_weights(home_team_raw, away_team_raw, predictions, stats, result)
             new_weight_home += new_weights['new_weight_home']
             new_weight_away += new_weights['new_weight_away']
 
