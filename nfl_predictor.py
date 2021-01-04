@@ -7,32 +7,44 @@ import weight
 
 def main():
     # TODO: update save_to_df so you dont need to change when training
+
+    # gather dataframes
     matchups_df = save_to_df(constants.SCHEDULE_URL) # change to save_to_df2 if training
     pts_df = save_to_df(constants.AVG_PTS_URL)
     pts_allowed_df = save_to_df(constants.AVG_PTS_ALLOWED_URL)
-    new_weight_home = 0.0 # for training
-    new_weight_away = 0.0 # for training
+
+    # for training
+    new_weight_home = 0.0
+    new_weight_away = 0.0
+
     for i in range(matchups_df.shape[0]): # length of rows in df
+        # search for team by name, index 1 is home teams column, index 0 is away teams column
         home_team = clean_name(matchups_df.iloc[i][1])
         away_team = clean_name(matchups_df.iloc[i][0])
-        stats = get_matchup_stats(home_team, away_team, pts_df, pts_allowed_df)
 
+        stats = get_matchup_stats(home_team, away_team, pts_df, pts_allowed_df)
         predictions = get_predictions(home_team, away_team, stats)
-        if (not constants.GET_NEW_WEIGHTS):
+
+        if (not constants.GET_NEW_WEIGHTS): # displaying or training
             if (constants.SAVE_TO_TXT):
+                # saving results to .txt file in ./out/ folder
                 filename = './out/'+constants.FILENAME+'.txt'
                 os.makedirs(os.path.dirname(filename), exist_ok=True)
                 sys.stdout = open(filename, 'a')
                 display_predictions(home_team, away_team, predictions)
                 sys.stdout.close()
             else:
+                # displaying results to console
                 display_predictions(home_team, away_team, predictions)
         else:
+            # for training
             new_weights = weight.find_new_weights(home_team, away_team, predictions, stats)
             new_weight_home += new_weights['new_weight_home']
             new_weight_away += new_weights['new_weight_away']
 
     if (constants.GET_NEW_WEIGHTS):
+        # for training
+        # final computation and display of new weights to console
         new_weight_home = new_weight_home/matchups_df.shape[0]
         new_weight_away = new_weight_away/matchups_df.shape[0]
         print('New Home Weight: ' + str(new_weight_home))
@@ -57,13 +69,19 @@ def save_to_df2(url):
     return df
 
 def get_matchup_stats(home_team, away_team, pts_df, pts_allowed_df):
+    # get index of home and away team in the pts_df
     home_i = pts_df[pts_df['Team'] == home_team].index[0]
     away_i = pts_df[pts_df['Team'] == away_team].index[0]
+
+    # get avg points of each team using the index
     home_avg_pts = pts_df.iloc[home_i]['2020']
     away_avg_pts = pts_df.iloc[away_i]['2020']
 
+    # get index of home and away team in the pts_allowed_df
     home_i = pts_allowed_df[pts_allowed_df['Team'] == home_team].index[0]
     away_i = pts_allowed_df[pts_allowed_df['Team'] == away_team].index[0]
+
+    # get avg points of each team using the index
     home_pts_allowed = pts_allowed_df.iloc[home_i]['2020']
     away_pts_allowed = pts_allowed_df.iloc[away_i]['2020']
 
@@ -74,36 +92,30 @@ def get_matchup_stats(home_team, away_team, pts_df, pts_allowed_df):
             "away_pts_allowed": away_pts_allowed
            }
 
-# TODO: clean and fix commented out code
 def get_predictions(home_team, away_team, stats):
     home_score = stats['home_avg_pts']*constants.AVG_PTS_WEIGHT + stats['away_pts_allowed']*constants.AVG_PTS_ALLOWED_WEIGHT
     away_score = stats['away_avg_pts']*constants.AVG_PTS_WEIGHT + stats['home_pts_allowed']*constants.AVG_PTS_ALLOWED_WEIGHT
     spread = round(abs(home_score - away_score), constants.SPREAD_DECIMALS)
 
+    # round after spread is configured for spread's accuracy
     home_score = round(home_score, constants.SCORE_DECIMALS)
     away_score = round(away_score, constants.SCORE_DECIMALS)
 
+    # cast float to int if rounding to whole number
     if (constants.SCORE_DECIMALS == 0):
         home_score = int(home_score)
         away_score = int(away_score)
     if (constants.SPREAD_DECIMALS == 0):
         spread = int(spread)
 
-    if (home_score > away_score):
-        winner = home_team
-    elif (away_score > home_score):
-        winner = away_team
-    else:
-        winner = 'TIE'
-
     return {
             "away_score": away_score,
             "home_score": home_score,
-            "winner": winner,
             "spread": spread
            }
 
 def display_predictions(home_team, away_team, predictions):
+    # decide who the favorite is for the spread symbols
     spread = str(predictions['spread'])
     if (predictions['home_score'] > predictions['away_score']):
         home_spread = '(-' + spread + ')'
@@ -115,11 +127,11 @@ def display_predictions(home_team, away_team, predictions):
     print(away_team +' @ '+ home_team)
     print( '{:<6s} {:<15s} {:<5s}'.format(away_spread, away_team, str(predictions['away_score'])) )
     print( '{:<6s} {:<15s} {:<5s}'.format(home_spread, home_team, str(predictions['home_score'])) )
-    print( '{:<22s} {:<5s}'.format('Combined Score ', str(predictions['home_score'] + predictions['away_score'])))
+    print( '{:<22s} {:<5s}'.format('Combined Score ', str(predictions['home_score'] + predictions['away_score'])) )
     print('\n')
 
 def clean_name(team):
-    # special cases
+    # special cases (teams share a city and are listed differently on the sites)
     if team == 'Los Angeles LAC':
         return 'LA Chargers'
     elif team == 'Los Angeles LAR':
@@ -134,6 +146,6 @@ def clean_name(team):
         return 'NY Jets'
 
     else:
-        return team[:-3].strip() # remove abbreviations
+        return team[:-3].strip() # just remove abbreviation if not a special case
 
 main()
