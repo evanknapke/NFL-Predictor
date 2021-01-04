@@ -1,7 +1,9 @@
 import constants
+import re
 
-def find_new_weights(home_team, away_team, predictions, stats):
-    actual_scores = get_actual_scores(home_team) # TODO: search home and away when web scrape is implemented
+# TODO: use more data then just 1 week
+def find_new_weights(home_team, away_team, predictions, stats, result):
+    actual_scores = get_actual_scores(home_team, away_team, result)
     new_weight_home = constants.AVG_PTS_WEIGHT
     new_weight_away = constants.AVG_PTS_WEIGHT
 
@@ -22,41 +24,10 @@ def find_new_weights(home_team, away_team, predictions, stats):
             'new_weight_away': new_weight_away
            }
 
-# TODO: pull actual scores from web or api
-# TODO: use more data; only sunday of week 16 data currently used for training
-def get_actual_scores(home_team):
-    if (home_team == 'Kansas City'):
-        away = 14
-        home = 17
-    elif (home_team == 'NY Jets'):
-        away = 16
-        home = 23
-    elif (home_team == 'Pittsburgh'):
-        away = 24
-        home = 28
-    elif (home_team == 'Jacksonville'):
-        away = 41
-        home = 17
-    elif (home_team == 'Baltimore'):
-        away = 13
-        home = 27
-    elif (home_team == 'Houston'):
-        away = 37
-        home = 31
-    elif (home_team == 'LA Chargers'):
-        away = 16
-        home = 19
-    elif (home_team == 'Washington'):
-        away = 20
-        home = 13
-    elif (home_team == 'Dallas'):
-        away = 17
-        home = 37
-    elif (home_team == 'Seattle'):
-        away = 9
-        home = 20
-    elif (home_team == 'Green Bay'):
-        away = 14
-        home = 40
+def get_actual_scores(home_team, away_team, result):
+    away_abbreviation = away_team.split()[-1]
+    home_abbreviation = home_team.split()[-1]
+    if (away_abbreviation in result and home_abbreviation in result):
+        scores = re.findall(r'\d+', result) # extract scores
 
-    return {"home": home, "away": away}
+    return {"home": int(scores[1]), "away": int(scores[0])}

@@ -17,10 +17,14 @@ def main():
     new_weight_home = 0.0
     new_weight_away = 0.0
 
-    for i in range(matchups_df.shape[0]): # length of rows in df
+    amount_of_games = matchups_df.shape[0]
+    for i in range(amount_of_games): # length of rows in df
         # search for team by name, index 1 is home teams column, index 0 is away teams column
-        home_team = clean_name(matchups_df.iloc[i][1])
-        away_team = clean_name(matchups_df.iloc[i][0])
+        home_team_raw = matchups_df.iloc[i][1]
+        away_team_raw = matchups_df.iloc[i][0]
+
+        home_team = clean_name(home_team_raw)
+        away_team = clean_name(away_team_raw)
 
         stats = get_matchup_stats(home_team, away_team, pts_df, pts_allowed_df)
         predictions = get_predictions(home_team, away_team, stats)
@@ -38,18 +42,13 @@ def main():
                 display_predictions(home_team, away_team, predictions)
         else:
             # for training
-            new_weights = weight.find_new_weights(home_team, away_team, predictions, stats)
+            result = matchups_df.iloc[i][2]
+            new_weights = weight.find_new_weights(home_team_raw, away_team_raw, predictions, stats, result)
             new_weight_home += new_weights['new_weight_home']
             new_weight_away += new_weights['new_weight_away']
 
     if (constants.GET_NEW_WEIGHTS):
-        # for training
-        # final computation and display of new weights to console
-        new_weight_home = new_weight_home/matchups_df.shape[0]
-        new_weight_away = new_weight_away/matchups_df.shape[0]
-        print('New Home Weight: ' + str(new_weight_home))
-        print('New Away Weight: ' + str(new_weight_away))
-        print('Average Weight:  ' + str( (new_weight_home + new_weight_away) / 2))
+        display_new_weights(new_weight_home, new_weight_away, amount_of_games)
 
 # TODO: rewrite these into 1 function to take in all tables on the page
 #      or only select the table for the matchups
@@ -128,6 +127,15 @@ def display_predictions(home_team, away_team, predictions):
     print( '{:<6s} {:<15s} {:<5s}'.format(away_spread, away_team, str(predictions['away_score'])) )
     print( '{:<6s} {:<15s} {:<5s}'.format(home_spread, home_team, str(predictions['home_score'])) )
     print( '{:<22s} {:<5s}'.format('Combined Score ', str(predictions['home_score'] + predictions['away_score'])) )
+    print('\n')
+
+def display_new_weights(new_weight_home, new_weight_away, amount_of_games):
+    # final computation and display of new weights to console
+    new_weight_home = new_weight_home/amount_of_games
+    new_weight_away = new_weight_away/amount_of_games
+    print('New Home Weight: ' + str(new_weight_home))
+    print('New Away Weight: ' + str(new_weight_away))
+    print('Average Weight:  ' + str( (new_weight_home + new_weight_away) / 2))
     print('\n')
 
 def clean_name(team):
