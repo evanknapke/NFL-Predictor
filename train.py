@@ -19,10 +19,7 @@ def find_new_weights(home_team, away_team, predictions, stats, result):
             away_total = away_new_guess # new closest score to beat
             new_weight_away = w # new best weight
 
-    return {
-            'new_weight_home': new_weight_home,
-            'new_weight_away': new_weight_away
-           }
+    return new_weight_home + new_weight_away
 
 def get_actual_scores(home_team, away_team, result):
     away_abbreviation = away_team.split()[-1]
@@ -30,4 +27,38 @@ def get_actual_scores(home_team, away_team, result):
     if (away_abbreviation in result and home_abbreviation in result):
         scores = re.findall(r'\d+', result) # extract scores
 
-    return {"home": int(scores[0]), "away": int(scores[1])}
+    # differentiate between home and away scores
+    if result.split()[0] == home_abbreviation and scores[0] > scores[1]:
+        home = int(scores[0])
+        away = int(scores[1])
+    else:
+        home = int(scores[1])
+        away = int(scores[0])
+
+    return {"home": home, "away": away}
+
+# TODO: grade new weight automatically
+# if ml is guessed correctly add 1
+def grade_moneyline(home_team, away_team, prediction, result):
+    actual_scores = get_actual_scores(home_team, away_team, result)
+
+    if prediction['home_score'] > prediction['away_score']:
+        predicted_winner = home_team
+    elif prediction['home_score'] < prediction['away_score']:
+        predicted_winner = away_team
+    else:
+        predicted_winner = 'TIE'
+
+    if actual_scores['home'] > actual_scores['away']:
+        actual_winner = home_team
+    elif actual_scores['home'] < actual_scores['away']:
+        actual_winner = away_team
+    else:
+        actual_winner = 'TIE'
+
+    if predicted_winner == actual_winner:
+        correct = 1
+    else:
+        correct = 0
+
+    return correct

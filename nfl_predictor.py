@@ -12,8 +12,8 @@ def main():
     pts_allowed_df = save_to_df(constants.AVG_PTS_ALLOWED_URL)
 
     # for training
-    new_weight_home = 0.0
-    new_weight_away = 0.0
+    new_weight = 0.0
+    correct_ml = 0
 
     amount_of_games = matchups_df.shape[0]
     for i in range(amount_of_games): # length of rows in df
@@ -25,7 +25,7 @@ def main():
         away_team = clean_name(away_team_raw)
 
         stats = get_matchup_stats(home_team, away_team, pts_df, pts_allowed_df)
-        predictions = get_predictions(home_team, away_team, stats)
+        prediction = get_prediction(home_team, away_team, stats)
 
         if (not constants.GET_NEW_WEIGHTS): # displaying or training
             if (constants.SAVE_TO_TXT):
@@ -33,20 +33,21 @@ def main():
                 filename = './out/'+constants.FILENAME+'.txt'
                 os.makedirs(os.path.dirname(filename), exist_ok=True)
                 sys.stdout = open(filename, 'a')
-                display_predictions(home_team, away_team, predictions)
+                display_prediction(home_team, away_team, prediction)
                 sys.stdout.close()
             else:
                 # displaying results to console
-                display_predictions(home_team, away_team, predictions)
+                display_prediction(home_team, away_team, prediction)
         else:
             # for training
             result = matchups_df.iloc[i][2]
-            new_weights = train.find_new_weights(home_team_raw, away_team_raw, predictions, stats, result)
-            new_weight_home += new_weights['new_weight_home']
-            new_weight_away += new_weights['new_weight_away']
+            new_weight += train.find_new_weights(home_team_raw, away_team_raw, prediction, stats, result)
+            correct_ml += train.grade_moneyline(home_team_raw, away_team_raw, prediction, result)
 
     if (constants.GET_NEW_WEIGHTS):
-        display_new_weights(new_weight_home, new_weight_away, amount_of_games)
+        display_new_weights(new_weight, amount_of_games)
+        print("Current ML Win Percentage: " + str( (correct_ml / amount_of_games)*100) + '%')
+
 
 def save_to_df(url):
     r = requests.get(url)
@@ -78,7 +79,7 @@ def get_matchup_stats(home_team, away_team, pts_df, pts_allowed_df):
             "away_pts_allowed": away_pts_allowed
            }
 
-def get_predictions(home_team, away_team, stats):
+def get_prediction(home_team, away_team, stats):
     home_score = stats['home_avg_pts']*constants.AVG_PTS_WEIGHT + stats['away_pts_allowed']*constants.AVG_PTS_ALLOWED_WEIGHT
     away_score = stats['away_avg_pts']*constants.AVG_PTS_WEIGHT + stats['home_pts_allowed']*constants.AVG_PTS_ALLOWED_WEIGHT
     spread = round(abs(home_score - away_score), constants.SPREAD_DECIMALS)
@@ -100,10 +101,10 @@ def get_predictions(home_team, away_team, stats):
             "spread": spread
            }
 
-def display_predictions(home_team, away_team, predictions):
+def display_prediction(home_team, away_team, prediction):
     # decide who the favorite is for the spread symbols
-    spread = str(predictions['spread'])
-    if (predictions['home_score'] > predictions['away_score']):
+    spread = str(prediction['spread'])
+    if (prediction['home_score'] > prediction['away_score']):
         home_spread = '(-' + spread + ')'
         away_spread = '(+' + spread + ')'
     else:
@@ -111,19 +112,15 @@ def display_predictions(home_team, away_team, predictions):
         away_spread = '(-' + spread + ')'
 
     print(away_team +' @ '+ home_team)
-    print( '{:<6s} {:<15s} {:<5s}'.format(away_spread, away_team, str(predictions['away_score'])) )
-    print( '{:<6s} {:<15s} {:<5s}'.format(home_spread, home_team, str(predictions['home_score'])) )
-    print( '{:<22s} {:<5s}'.format('Combined Score ', str(predictions['home_score'] + predictions['away_score'])) )
+    print( '{:<6s} {:<15s} {:<5s}'.format(away_spread, away_team, str(prediction['away_score'])) )
+    print( '{:<6s} {:<15s} {:<5s}'.format(home_spread, home_team, str(prediction['home_score'])) )
+    print( '{:<22s} {:<5s}'.format('Combined Score ', str(prediction['home_score'] + prediction['away_score'])) )
     print('\n')
 
-def display_new_weights(new_weight_home, new_weight_away, amount_of_games):
-    # final computation and display of new weights to console
-    new_weight_home = new_weight_home/amount_of_games
-    new_weight_away = new_weight_away/amount_of_games
-    print('New Home Weight: ' + str(new_weight_home))
-    print('New Away Weight: ' + str(new_weight_away))
-    print('Average Weight:  ' + str( (new_weight_home + new_weight_away) / 2))
-    print('\n')
+# TODO: update so this divides by games in train.py
+def display_new_weights(new_weight, amount_of_games):
+    new_weight = new_weight / amount_of_games
+    print('New Weight:  ' + str( (new_weight) / 2)) # divide by 2 because it is taking the average weight for home and away team
 
 def clean_name(team):
     # special cases (teams share a city and are listed differently on the sites)
