@@ -6,10 +6,8 @@ import sys
 import train
 
 def main():
-    # TODO: update save_to_df so you dont need to change when training
-
     # gather dataframes
-    matchups_df = save_to_df(constants.SCHEDULE_URL) # change to save_to_df2 if training
+    matchups_df = save_to_df(constants.SCHEDULE_URL)
     pts_df = save_to_df(constants.AVG_PTS_URL)
     pts_allowed_df = save_to_df(constants.AVG_PTS_ALLOWED_URL)
 
@@ -50,21 +48,10 @@ def main():
     if (constants.GET_NEW_WEIGHTS):
         display_new_weights(new_weight_home, new_weight_away, amount_of_games)
 
-# TODO: rewrite these into 1 function to take in all tables on the page
-#      or only select the table for the matchups
-#      or find new website that works better that puts matchups into one table
 def save_to_df(url):
     r = requests.get(url)
     df_list = pd.read_html(r.text) # parses all the tables in webpage to a list
-    df = df_list[0] # first table on the page
-    df.head()
-    return df
-
-def save_to_df2(url):
-    r = requests.get(url)
-    df_list = pd.read_html(r.text) # parses all the tables in webpage to a list
-    df = df_list[2]
-    df.head()
+    df = pd.concat(df_list) # concatenates all tables on page together into 1 dataframe
     return df
 
 def get_matchup_stats(home_team, away_team, pts_df, pts_allowed_df):

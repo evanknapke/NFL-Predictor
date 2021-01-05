@@ -1,8 +1,6 @@
 # NFL-Predictor
 Pulls live stats from the web to predict outcomes of the upcoming schedule.
 
-Currently, this project is a work in progress and is not very accurate in predicting future results. I do not recommend using as such.
-
 ## Dependencies:
 - Python 3+ (3.7.3 tested)
 - Pandas (`pip install pandas`)
