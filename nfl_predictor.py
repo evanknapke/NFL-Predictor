@@ -6,43 +6,49 @@ import sys
 import train
 
 def main():
-    # gather dataframes
-    matchups_df = save_to_df(constants.SCHEDULE_URL)
+    # create dataframes
+    if (constants.GET_NEW_WEIGHTS):
+        matchups_df = save_to_df(constants.TRAINING_SCHEDULE_URL)
+        new_weight = 0.0
+        correct_ml = 0
+    else:
+        matchups_df = save_to_df(constants.UPCOMING_SCHEDULE_URL)
     pts_df = save_to_df(constants.AVG_PTS_URL)
     pts_allowed_df = save_to_df(constants.AVG_PTS_ALLOWED_URL)
 
-    # for training
-    new_weight = 0.0
-    correct_ml = 0
-
     amount_of_games = matchups_df.shape[0]
     for i in range(amount_of_games): # length of rows in df
-        # search for team by name, index 1 is home teams column, index 0 is away teams column
-        home_team_raw = matchups_df.iloc[i][1]
-        away_team_raw = matchups_df.iloc[i][0]
+        try:
+            # search for team by name, index 1 is home teams column, index 0 is away teams column
+            home_team_raw = matchups_df.iloc[i][1]
+            away_team_raw = matchups_df.iloc[i][0]
 
-        home_team = clean_name(home_team_raw)
-        away_team = clean_name(away_team_raw)
+            home_team = clean_name(home_team_raw)
+            away_team = clean_name(away_team_raw)
 
-        stats = get_matchup_stats(home_team, away_team, pts_df, pts_allowed_df)
-        prediction = get_prediction(home_team, away_team, stats)
+            stats = get_matchup_stats(home_team, away_team, pts_df, pts_allowed_df)
+            prediction = get_prediction(home_team, away_team, stats)
 
-        if (not constants.GET_NEW_WEIGHTS): # displaying or training
-            if (constants.SAVE_TO_TXT):
-                # saving results to .txt file in ./out/ folder
-                filename = './out/'+constants.FILENAME+'.txt'
-                os.makedirs(os.path.dirname(filename), exist_ok=True)
-                sys.stdout = open(filename, 'a')
-                display_prediction(home_team, away_team, prediction)
-                sys.stdout.close()
+            if (not constants.GET_NEW_WEIGHTS): # displaying or training
+                if (constants.SAVE_TO_TXT):
+                    # saving results to .txt file in ./out/ folder
+                    filename = './out/'+constants.FILENAME+'.txt'
+                    os.makedirs(os.path.dirname(filename), exist_ok=True)
+                    sys.stdout = open(filename, 'a')
+                    display_prediction(home_team, away_team, prediction)
+                    sys.stdout.close()
+                else:
+                    # displaying results to console
+                    display_prediction(home_team, away_team, prediction)
             else:
-                # displaying results to console
-                display_prediction(home_team, away_team, prediction)
-        else:
-            # for training
-            result = matchups_df.iloc[i][2]
-            new_weight += train.find_new_weights(home_team_raw, away_team_raw, prediction, stats, result)
-            correct_ml += train.grade_moneyline(home_team_raw, away_team_raw, prediction, result)
+                # for training
+                result = matchups_df.iloc[i][2]
+                new_weight += train.find_new_weights(home_team_raw, away_team_raw, prediction, stats, result)
+                correct_ml += train.grade_moneyline(home_team_raw, away_team_raw, prediction, result)
+        except IndexError:
+            # happens when there is something other then a team in the columns
+            # example: "AFC Wild Card Playoffs" header
+            pass
 
     if (constants.GET_NEW_WEIGHTS):
         display_new_weights(new_weight, amount_of_games)

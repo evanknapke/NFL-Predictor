@@ -1,7 +1,7 @@
 GET_NEW_WEIGHTS = False # boolean, False to not calculate a new weight
 
-#SCHEDULE_URL = 'https://www.espn.com/nfl/schedule/_/week/16' # for training
-SCHEDULE_URL = 'https://www.espn.com/nfl/schedule/' # for upcoming games
+TRAINING_SCHEDULE_URL = 'https://www.espn.com/nfl/schedule/_/week/16/seasontype/2' # for training
+UPCOMING_SCHEDULE_URL = 'https://www.espn.com/nfl/schedule/' # for upcoming games
 
 AVG_PTS_URL = 'https://www.teamrankings.com/nfl/stat/points-per-game'
 AVG_PTS_ALLOWED_URL = 'https://www.teamrankings.com/nfl/stat/opponent-points-per-game'
