@@ -17,6 +17,7 @@ def main():
     pts_allowed_df = save_to_df(constants.AVG_PTS_ALLOWED_URL)
 
     amount_of_games = matchups_df.shape[0]
+
     for i in range(amount_of_games): # length of rows in df
         try:
             # search for team by name, index 1 is home teams column, index 0 is away teams column
@@ -48,6 +49,7 @@ def main():
         except IndexError:
             # happens when there is something other then a team in the columns
             # example: "AFC Wild Card Playoffs" header
+            amount_of_games -= 1 # decrement the amount of rows since this instance was not a valid game
             pass
 
     if (constants.GET_NEW_WEIGHTS):
